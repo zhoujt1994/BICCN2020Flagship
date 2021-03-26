@@ -18,7 +18,7 @@ mpl.rcParams['ps.fonttype'] = 42
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['font.sans-serif'] = 'Helvetica'
 
-#
+# panel a toy tsne
 center = np.array([[0,2],[0,-2],[3,0]])
 ratio = [0.9, 0.5, 0.1]
 data = []
@@ -52,10 +52,7 @@ plt.close()
 
 
 
-
-
-indir = '/gale/netapp/home/tanpengcheng/projects/CEMBA_RS2/matrix/'
-outdir = '/gale/netapp/home/zhoujt/project/CEMBA/RS2/merge_RS2/cortex/'
+# panel b,c tsne
 
 rate_reduce = np.load(indir + 'cell_6985_RS1.2_MOp_posterior_disp2k_pc100.npy')
 y = umap.fit_transform(rate_reduce[:,:50])
@@ -98,6 +95,9 @@ plt.tight_layout()
 plt.savefig(outdir + 'plot/cell_6986_MOp_RS1_RS2_posterior_pc50_p50.meta.pdf', transparent=True, bbox_inches='tight', dpi=300)
 plt.close()
 
+
+# panel d bar plot
+
 metatmp = np.concatenate((metatmp[metatmp[:,-2]=='RS1'], metaall[metaall[:,-5]=='MOp'][:,[0,6,9,10,8,7]]))
 metatmp[metatmp[:,4]=='RS1',4] = 'Unbiased'
 tar = ['Unbiased', 'SSp', 'ACA', 'STR', 'TH', 'SC', 'VTA', 'Pons', 'MY']
@@ -121,6 +121,7 @@ plt.savefig(outdir + 'plot/cell_6982_MOp_RS1_RS2.proj_layer_ratio.pdf', transpar
 plt.close()
 
 
+# panel e,f L5ET tsne
 
 tar = ['MOp', 'SSp', 'ACA', 'VISp', 'STR', 'SC', 'Pons', 'VTA', 'TH', 'MY']
 y = np.loadtxt(indir + 'cell_848_L5ET_MOp_posterior_disp2k_pca50_ndim30_nn15_umap_y.txt')
@@ -156,6 +157,8 @@ plt.tight_layout()
 plt.savefig(outdir + 'L5PT/plot/cell_848_L5ET_MOp_RS2_posterior_pc50_p50.meta.pdf', transparent=True, bbox_inches='tight', dpi=300)
 plt.close()
 
+
+# panel h merge allc and DMR calling
 
 metaall = np.load(indir + 'cell_4176_L5ET_meta.npy')
 meta = metaall[metaall[:,12]=='MOp']
@@ -291,6 +294,8 @@ plt.tight_layout()
 plt.savefig(indir + 'plot/L5-ET_15cluster_DMR_CG_comb_count_bar.pdf', transparent=True)
 plt.close()
 
+
+# panel i DMG calling
 
 outdir = '/gale/netapp/home/tanpengcheng/projects/CEMBA_RS2/matrix/'
 cluster = np.load(outdir + 'cell_11827_posterior_disp2k_pc100_nd50_p50.pc50.knn25.louvain_res1.2_nc25_cluster_label.npy')
@@ -510,53 +515,6 @@ for i in range(nc-1):
 
 print(np.sum(selg))
 
-selg = np.zeros(len(gene))
-i = 0
-for j in range(1,nc):
-	pv = np.loadtxt(outdir + 'cluster_'+str(i)+'_'+str(j)+'.ga.m.wald.pvalue.txt')
-	fdr = FDR(pv, 0.01, 'fdr_bh')[1]
-	fc = np.log2((rateg_cluster[i] + 0.5) / (rateg_cluster[j] + 0.5))
-	tmp = np.logical_and(fdr<0.01, fc<-np.log2(1.5))
-	# df = rateg_cluster[i] - rateg_cluster[j]
-	# tmp = np.logical_and(fdr<0.01, np.abs(df)>0.5)
-	selg = np.logical_or(selg, tmp)
-	print(i, j, np.sum(fdr<0.01), np.sum(fc<-np.log2(1.5)), np.sum(tmp))
-
-print(np.sum(selg))
-
-# rateg_cluster_neg = np.array([np.mean(rateg[cluster!=i], axis=0) for i in range(nc)])
-# selg = np.zeros(len(gene))
-# for i in range(nc-1):
-# 	pv = np.loadtxt(outdir + 'cluster_'+str(i)+'.ga.m.ovr.wald.pvalue.txt')
-# 	fdr = FDR(pv, 0.01, 'fdr_bh')[1]
-# 	fc = np.log2((rateg_cluster[i] + 0.5) / (rateg_cluster_neg[i] + 0.5))
-# 	tmp = np.logical_and(fdr<0.01, fc<-np.log2(1.5))
-# 	# df = rateg_cluster[i] - rateg_cluster[j]
-# 	# tmp = np.logical_and(fdr<0.01, np.abs(df)>0.5)
-# 	selg = np.logical_or(selg, tmp)
-# 	print(i, j, np.sum(fdr<0.01), np.sum(fc<-np.log2(1.5)), np.sum(tmp))
-
-# print(np.sum(selg))
-
-np.savetxt(indir + 'cell_4176_L5ET_15cluster_ovo_ga_m_pv01_fc50_pseudo50.txt', gene[selg,-1], fmt='%s', delimiter='\n')
-
-mch = rateg_cluster.T
-leg = [str(i) for i in range(nc)]
-cg = clustermap(mch[selg], vmin=-2, vmax=2, cmap='bwr', xticklabels=leg, yticklabels=[], metric='cosine', cbar_kws={'ticks':[-2, 2]}, z_score=0)
-cg.ax_heatmap.tick_params(axis='both', which='both', length=0)
-plt.setp(cg.ax_heatmap.get_xticklabels(), fontsize=12, rotation=60, ha='right', rotation_mode='anchor')
-cg.cax.tick_params(labelsize=12)
-cg.ax_row_dendrogram.set_visible(False)
-cg.ax_col_dendrogram.set_visible(False)
-hm = cg.ax_heatmap.get_position()
-cg.ax_heatmap.set_position([hm.x0, hm.y0+hm.height*0.6, hm.width*0.5, hm.height*0.4])
-cg.ax_heatmap.set_ylabel(np.str(np.sum(selg)) + ' CH-DMG', fontsize=12)
-cg.ax_heatmap.yaxis.set_label_position('left')
-cb = cg.cax.get_position()
-cg.cax.set_position([hm.x0+0.55*hm.width, hm.y0+hm.height*0.6, cb.width, cb.height])
-cg.cax.yaxis.set_label_position('left')
-cg.cax.set_ylabel('mCH z-score', fontsize=12)
-cg.savefig(indir + 'plot/MOp_L5-ET_6cluster_ovo_ga_m_pv01_fc50_pseudo50_mch.pdf', transparent=True)
 
 genedict = {x:i for i,x in enumerate(gene[:,-1])}
 marker = ['Astn2', 'Ccbe1', 'Camta1', 'Syn2', 'Galntl6', 'Foxp1']
